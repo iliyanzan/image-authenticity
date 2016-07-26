@@ -53,7 +53,15 @@ public class MainActivity extends AppCompatActivity {
      * @param height Height of the image.
      */
     private void zeroWatarmarkBits(int pixels[], int width, int height) {
+        if(pixels==null || pixels.length != width*height) {
+            //TODO Exception handling.
+        }
+
         int[] mask = watermarkBitsMaskGeneration(width, height);
+
+        for(int k=0; k<mask.length && k<pixels.length; k++) {
+            pixels[k] &= mask[k];
+        }
     }
 
     @Override
@@ -76,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bitmap bitmap = (Bitmap) data.getExtras().get("data");
             (ImageView)findViewById(R.id.imageView).setImageBitmap(bitmap);
+
+            //TODO Do all time consuming calculations in separate thread.
 
             /*
              * Image information as array of RGB pixels.
