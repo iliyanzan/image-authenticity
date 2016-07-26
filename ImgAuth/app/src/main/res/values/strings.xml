@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ImgAuth</string>
+    <string name="button">Take Photo</string>
+    <string name="image">Taken Photo</string>
+</resources>
