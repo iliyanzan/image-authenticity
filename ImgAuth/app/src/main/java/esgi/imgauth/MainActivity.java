@@ -7,6 +7,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 
 public class MainActivity extends AppCompatActivity {
     /**
@@ -135,6 +137,19 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
         }
     }
+    
+    private long calculateCRC(int pixels[]) {
+        byte[] pixelsAsBytes = new byte[pixels.length * 4];
+        for(int i=0;i<pixels.length;i++){
+            pixelsAsBytes[i] = (byte) ((pixels[i] >> 24) & 0xFF); //Alpha
+            pixelsAsBytes[i+1] = (byte)((pixels[i] >> 16) & 0xFF); //Red
+            pixelsAsBytes[i+2] = (byte)((pixels[i] >> 8) & 0xFF); //Green
+            pixelsAsBytes[i+3] = (byte)(pixels[i] & 0xFF); //Blue
+        }
+        Checksum checksum = new CRC32();
+        checksum.update(pixelsAsBytes, 0, pixels.length);
+        return checksum.getValue();
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -161,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
 
             //TODO RSA digital stamp generation.
 
-            //TODO CRC codes generation.
+            long crc32 = calculateCRC(pixels);
 
             //TODO Watermarking with digital stamp and CRC codes.
 
