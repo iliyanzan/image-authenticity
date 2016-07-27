@@ -8,6 +8,10 @@ import android.os.Bundle;
 import android.util.Base64;
 import android.widget.ImageView;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.security.InvalidKeyException;
@@ -132,10 +136,6 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         } catch (InvalidKeyException e) {
             e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
         }
 
     }
@@ -196,6 +196,26 @@ public class MainActivity extends AppCompatActivity {
         return rgb;
     }
 
+    /**
+     * Save watermarked image in the local device storage.
+     *
+     * @param image Bitmap object.
+     * @param name Name of the file.
+     */
+    private void saveImageToFile(Bitmap image, String name) {
+        try {
+            FileOutputStream out = new FileOutputStream(new File(name));
+
+            image.compress(Bitmap.CompressFormat.PNG, 100, out);
+
+            out.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -242,12 +262,19 @@ public class MainActivity extends AppCompatActivity {
             //TODO CRC codes generation.
 
             //TODO Watermarking with digital stamp and CRC codes.
+            int[] watermarked = null;//watermarkTheImage(pixels, digitalSignature);
 
             //TODO Meta data createion.
 
-            //TODO SNR calculation.
+            /*
+             * SNR calculation.
+             */
+            calculateSignalToNoiceRatio(pixels, watermarked);
 
-            //TODO Save bitmap image file.
+            /*
+             * Save bitmap image file.
+             */
+            saveImageToFile(Bitmap.createBitmap(pixels, 0, bitmap.getWidth(), bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888), ""+System.currentTimeMillis()+".png");
         }
     }
 }
