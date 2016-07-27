@@ -64,6 +64,62 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    /**
+     * Singal to noise ratio calculation.
+     *
+     * @param original The origial image as RGB pixesl array.
+     * @param watermarked The watermarked image as RGB pixels array.
+     *
+     * @return Three values SNR for each channel (red, green, blue).
+     */
+    private double[] calculateSignalToNoiceRatio(int original[], int watermarked[]) {
+        if(original==null || watermarked==null || original.length!=watermarked.length) {
+            //TODO Rise an exception.
+        }
+
+        double rgb[] = {0, 0, 0};
+
+        int value;
+        for(int k=0; k<original.length && k<watermarked.length; k++) {
+            /*
+             * Red channel.
+             */
+            value = (original[k]>>16)&0xFF - (watermarked[k]>>16)&0xFF;
+            rgb[0] += value*value;
+
+            /*
+             * Green channel.
+             */
+            value = (original[k]>>8)&0xFF - (watermarked[k]>>8)&0xFF;
+            rgb[1] += value*value;
+
+            /*
+             * Blue channel.
+             */
+            value = (original[k]>>0)&0xFF - (watermarked[k]>>0)&0xFF;
+            rgb[2] += value*value;
+        }
+
+        /*
+         * Normalize sum as mean square error.
+         */
+        rgb[0] /= (double)original.length;
+        rgb[1] /= (double)original.length;
+        rgb[2] /= (double)original.length;
+
+        final int MAX_INTENSITY_VALUE = 255;
+
+        /*
+         * Logarithm transform in order to get dB.
+         */
+        rgb[0] = 10D * Math.log10(MAX_INTENSITY_VALUE*MAX_INTENSITY_VALUE / rgb[0]);
+        rgb[1] = 10D * Math.log10(MAX_INTENSITY_VALUE*MAX_INTENSITY_VALUE / rgb[1]);
+        rgb[2] = 10D * Math.log10(MAX_INTENSITY_VALUE*MAX_INTENSITY_VALUE / rgb[2]);
+
+        return rgb;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
