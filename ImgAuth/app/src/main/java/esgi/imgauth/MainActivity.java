@@ -6,6 +6,14 @@ import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Base64;
+
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
@@ -118,27 +126,39 @@ public class MainActivity extends AppCompatActivity {
 
 
     private byte[] signImage(int pixels[], String key) {
+        /*
+         * Convert int array to byte array.
+         */
+        ByteBuffer buffer = ByteBuffer.allocate(pixels.length * 4);
+        buffer.asIntBuffer().put(pixels);
         try {
             /*
              * Obtain cipher object.
              */
-            Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.ENCRYPT_MODE, KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(Base64.decode(key,Base64.CRLF))));
+            //Cipher cipher = Cipher.getInstance("RSA");
+            //cipher.init(Cipher.ENCRYPT_MODE, KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(Base64.decode(key,Base64.CRLF))));
 
-            /*
-             * Convert int array to byte array.
-             */
-            ByteBuffer buffer = ByteBuffer.allocate(pixels.length * 4);
-            buffer.asIntBuffer().put(pixels);
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
 
-            //TODO cipher.doFinal(buffer.array());
+            SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
+            keyGen.initialize(1024, random);
+
+            KeyPair pair = keyGen.generateKeyPair();
+            PrivateKey priv = pair.getPrivate();
+            PublicKey pub = pair.getPublic();
+
+            Signature dsa = Signature.getInstance("SHA1withDSA", "SUN");
+            dsa.initSign(priv);
+            dsa.update(buffer);
+
+            return dsa.sign();
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeySpecException e) {
-            e.printStackTrace();
         } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (SignatureException e) {
             e.printStackTrace();
         }
 
@@ -292,9 +312,9 @@ public class MainActivity extends AppCompatActivity {
             zeroWatarmarkBits(pixels, bitmap.getWidth(), bitmap.getHeight());
 
             /*
-             * RSA digital sign.
+             * DSA digital sign.
              */
-            signImage(pixels, PUBLIC_KEY);
+            byte[] signature = signImage(pixels, PUBLIC_KEY);
 
             /*
              * CRC codes generation.
